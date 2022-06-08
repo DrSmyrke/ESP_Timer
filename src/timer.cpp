@@ -32,10 +32,9 @@ Timer::Timer(const uint8_t timerNum, const uint16_t samplingRate)
 	*/
 
 	counterMax = samplingRate;
-	hw_timer_t* timer = timerBegin( timerNum, 80, true );	//Begin timer with 1 MHz frequency (80MHz/80)
+	hw_timer_t* timer = timerBegin( timerNum, getCpuFrequencyMhz(), true );	//Begin timer with 1 MHz frequency (80MHz/80)
 	timerAttachInterrupt(timer, &onTimer, true);			//Attach the interrupt to Timer1
-	unsigned int timerFactor = 1000000/samplingRate;		//Calculate the time interval between two readings, or more accurately, the number of cycles between two readings
-	timerAlarmWrite(timer, timerFactor, true);				//Initialize the timer
+	timerAlarmWrite(timer, samplingRate, true);				//Initialize the timer
 	timerAlarmEnable(timer);
 }
 
