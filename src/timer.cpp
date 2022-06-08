@@ -1,25 +1,49 @@
 #include "timer.h"
-// #include "driver/timer.h"
+#if defined(ARDUINO_ARCH_ESP8266)
+	#include <os_type.h>
+	#include <osapi.h>
+#elif defined(ARDUINO_ARCH_ESP32)
+	#include <esp32-hal.h>
+#endif
 
 //------------------- VARIABLES ------------------------
-portMUX_TYPE timerMux		= portMUX_INITIALIZER_UNLOCKED;
-uint8_t interruptFlag		= 0;
-uint16_t counter			= 0;
-uint16_t counterMax			= 0;
+uint8_t interruptFlag			= 0;
+
+#if defined(ARDUINO_ARCH_ESP8266)
+	os_timer_t myTimer;
+#elif defined(ARDUINO_ARCH_ESP32)
+	portMUX_TYPE timerMux		= portMUX_INITIALIZER_UNLOCKED;
+	uint16_t counterMax			= 0;
+	uint16_t counter			= 0;
+#endif
+
 //------------------------------------------------------
-void IRAM_ATTR onTimer()
-{
-	portENTER_CRITICAL_ISR( &timerMux );
-	if( counter++ >= counterMax ){
+#if defined(ARDUINO_ARCH_ESP8266)
+	void timerCallback(void *pArg)
+	{
 		interruptFlag = 1;
-		counter = 0;
 	}
-	portEXIT_CRITICAL_ISR( &timerMux );
-}
+#elif defined(ARDUINO_ARCH_ESP32)
+	void IRAM_ATTR onTimer()
+	{
+		portENTER_CRITICAL_ISR( &timerMux );
+		if( counter++ >= counterMax ){
+			interruptFlag = 1;
+			counter = 0;
+		}
+		portEXIT_CRITICAL_ISR( &timerMux );
+	}
+#endif
+
 
 //------------------------------------------------------
 Timer::Timer(const uint8_t timerNum, const uint16_t samplingRate)
 {
+#if defined(ARDUINO_ARCH_ESP8266)
+	
+	os_timer_setfn( &myTimer, timerCallback, NULL );
+	os_timer_arm( &myTimer, samplingRate, true );
+#elif defined(ARDUINO_ARCH_ESP32)
 	/*
 	// инициализация таймера 0, группы 0
 	timer_config_t config;
@@ -36,6 +60,7 @@ Timer::Timer(const uint8_t timerNum, const uint16_t samplingRate)
 	timerAttachInterrupt(timer, &onTimer, true);			//Attach the interrupt to Timer1
 	timerAlarmWrite(timer, samplingRate, true);				//Initialize the timer
 	timerAlarmEnable(timer);
+#endif
 }
 
 
@@ -54,5 +79,7 @@ void Timer::confirmInerrupt()
 //------------------------------------------------------
 void Timer::counterReset()
 {
+#if defined(ARDUINO_ARCH_ESP32)
 	counter = 0;
+#endif
 }

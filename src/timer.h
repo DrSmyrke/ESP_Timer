@@ -2,8 +2,6 @@
 #define __MAIN_TIMER_H_
 
 #include <stdint.h>
-#include "esp32-hal.h"
-
 
 class Timer
 {
