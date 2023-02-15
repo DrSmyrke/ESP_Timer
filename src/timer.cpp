@@ -1,42 +1,18 @@
 #include "timer.h"
 
 //------------------- VARIABLES ------------------------
-
-
-#if defined(ARDUINO_ARCH_ESP8266)
-
-#elif defined(ARDUINO_ARCH_ESP32)
-	// portMUX_TYsPE timerMux		= portMUX_INITIALIZER_UNLOCKED;
-
-#endif
-
+//------------------------------------------------------
 //------------------------------------------------------
 #if defined(ARDUINO_ARCH_ESP8266)
-	void timerCallback(void *pArg)
-	{
-		interruptFlag = 1;
-	}
+Timer::Timer(const uint8_t timerNum, const uint16_t samplingRate, void (*callback)(void*))
+{
+	os_timer_setfn( &m_timer, callback, NULL );
+	os_timer_arm( &m_timer, samplingRate, true );
+}
+
 #elif defined(ARDUINO_ARCH_ESP32)
-	// void IRAM_ATTR onTimer()
-	// {
-	// 	portENTER_CRITICAL_ISR( &timerMux );
-	// 	// if( counter++ >= counterMax ){
-	// 		// interruptFlag = 1;
-	// 		// counter = 0;
-	// 	// }
-	// 	portEXIT_CRITICAL_ISR( &timerMux );
-	// }
-#endif
-
-
-//------------------------------------------------------
 Timer::Timer(const uint8_t timerNum, const uint16_t samplingRate, void (*callback)(void))
 {
-#if defined(ARDUINO_ARCH_ESP8266)
-	
-	os_timer_setfn( &myTimer, timerCallback, NULL );
-	os_timer_arm( &myTimer, samplingRate, true );
-#elif defined(ARDUINO_ARCH_ESP32)
 	/*
 	// инициализация таймера 0, группы 0
 	timer_config_t config;
@@ -48,25 +24,27 @@ Timer::Timer(const uint8_t timerNum, const uint16_t samplingRate, void (*callbac
 	timer_init(TIMER_GROUP_0, TIMER_0 , &config); // инициализация
 	*/
 
-	// counterMax = samplingRate;
 	uint32_t freq = getApbFrequency();
 	if( freq > 1000000 ) freq /= 1000000;
 	m_pTimer = timerBegin( timerNum, freq, true );	//Begin timer with 1 MHz frequency
 	//Attach the interrupt to Timer
 	timerAttachInterrupt( m_pTimer, callback, true );
 	//Initialize the timer
-	timerAlarmWrite( m_pTimer, 1000000, true );
+	timerAlarmWrite( m_pTimer, samplingRate * 1000, true );
 	timerAlarmEnable( m_pTimer );
-#endif
 }
-
+#endif
 
 //------------------------------------------------------
 //------------------------------------------------------
 //------------------------------------------------------
 void Timer::reset()
 {
+#if defined(ARDUINO_ARCH_ESP8266)
+	// os_time
+#elif defined(ARDUINO_ARCH_ESP32)
 	timerRestart( m_pTimer );
+#endif
 }
 
 //------------------------------------------------------

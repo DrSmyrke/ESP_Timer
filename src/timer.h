@@ -13,7 +13,11 @@
 class Timer
 {
 	public:
+#if defined(ARDUINO_ARCH_ESP8266)
+		explicit Timer(const uint8_t timerNum, const uint16_t samplingRate, void (*callback)(void*) = nullptr);
+#elif defined(ARDUINO_ARCH_ESP32)
 		explicit Timer(const uint8_t timerNum, const uint16_t samplingRate, void (*callback)(void) = nullptr);
+#endif
 		void reset();
 	private:
 #if defined(ARDUINO_ARCH_ESP8266)
