@@ -1,20 +1,13 @@
 #include "timer.h"
-#if defined(ARDUINO_ARCH_ESP8266)
-	#include <os_type.h>
-	#include <osapi.h>
-#elif defined(ARDUINO_ARCH_ESP32)
-	#include <esp32-hal.h>
-#endif
 
 //------------------- VARIABLES ------------------------
-uint8_t interruptFlag			= 0;
+
 
 #if defined(ARDUINO_ARCH_ESP8266)
-	os_timer_t myTimer;
+
 #elif defined(ARDUINO_ARCH_ESP32)
-	portMUX_TYPE timerMux		= portMUX_INITIALIZER_UNLOCKED;
-	uint16_t counterMax			= 0;
-	uint16_t counter			= 0;
+	// portMUX_TYsPE timerMux		= portMUX_INITIALIZER_UNLOCKED;
+
 #endif
 
 //------------------------------------------------------
@@ -24,20 +17,20 @@ uint8_t interruptFlag			= 0;
 		interruptFlag = 1;
 	}
 #elif defined(ARDUINO_ARCH_ESP32)
-	void IRAM_ATTR onTimer()
-	{
-		portENTER_CRITICAL_ISR( &timerMux );
-		if( counter++ >= counterMax ){
-			interruptFlag = 1;
-			counter = 0;
-		}
-		portEXIT_CRITICAL_ISR( &timerMux );
-	}
+	// void IRAM_ATTR onTimer()
+	// {
+	// 	portENTER_CRITICAL_ISR( &timerMux );
+	// 	// if( counter++ >= counterMax ){
+	// 		// interruptFlag = 1;
+	// 		// counter = 0;
+	// 	// }
+	// 	portEXIT_CRITICAL_ISR( &timerMux );
+	// }
 #endif
 
 
 //------------------------------------------------------
-Timer::Timer(const uint8_t timerNum, const uint16_t samplingRate)
+Timer::Timer(const uint8_t timerNum, const uint16_t samplingRate, void (*callback)(void))
 {
 #if defined(ARDUINO_ARCH_ESP8266)
 	
@@ -55,31 +48,26 @@ Timer::Timer(const uint8_t timerNum, const uint16_t samplingRate)
 	timer_init(TIMER_GROUP_0, TIMER_0 , &config); // инициализация
 	*/
 
-	counterMax = samplingRate;
-	hw_timer_t* timer = timerBegin( timerNum, getCpuFrequencyMhz(), true );	//Begin timer with 1 MHz frequency (80MHz/80)
-	timerAttachInterrupt(timer, &onTimer, true);			//Attach the interrupt to Timer1
-	timerAlarmWrite(timer, samplingRate, true);				//Initialize the timer
-	timerAlarmEnable(timer);
+	// counterMax = samplingRate;
+	uint32_t freq = getApbFrequency();
+	if( freq > 1000000 ) freq /= 1000000;
+	m_pTimer = timerBegin( timerNum, freq, true );	//Begin timer with 1 MHz frequency
+	//Attach the interrupt to Timer
+	timerAttachInterrupt( m_pTimer, callback, true );
+	//Initialize the timer
+	timerAlarmWrite( m_pTimer, 1000000, true );
+	timerAlarmEnable( m_pTimer );
 #endif
 }
 
 
 //------------------------------------------------------
-bool Timer::isInterrupt()
+//------------------------------------------------------
+//------------------------------------------------------
+void Timer::reset()
 {
-	return ( interruptFlag ) ? true : false;
+	timerRestart( m_pTimer );
 }
 
 //------------------------------------------------------
-void Timer::confirmInerrupt()
-{
-	interruptFlag = 0;
-}
-
 //------------------------------------------------------
-void Timer::counterReset()
-{
-#if defined(ARDUINO_ARCH_ESP32)
-	counter = 0;
-#endif
-}
