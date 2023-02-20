@@ -36,6 +36,16 @@ Timer::Timer(const uint8_t timerNum, const uint16_t samplingRate, void (*callbac
 #endif
 
 //------------------------------------------------------
+void Timer::setMaximum(void)
+{
+#if defined(ARDUINO_ARCH_ESP8266)
+	// os_time
+#elif defined(ARDUINO_ARCH_ESP32)
+	uint64_t value = timerRead( m_pTimer );
+	timerAlarmWrite( m_pTimer, value, true );
+#endif
+}
+
 //------------------------------------------------------
 //------------------------------------------------------
 void Timer::reset()

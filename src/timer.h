@@ -19,6 +19,7 @@ class Timer
 		explicit Timer(const uint8_t timerNum, const uint16_t samplingRate, void (*callback)(void) = nullptr);
 #endif
 		void reset();
+		void setMaximum(void);
 	private:
 #if defined(ARDUINO_ARCH_ESP8266)
 		os_timer_t m_timer;
