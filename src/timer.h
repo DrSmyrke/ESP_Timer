@@ -20,6 +20,7 @@ class Timer
 #endif
 		void reset();
 		void setMaximum(void);
+		uint64_t getCounterValue(void);
 	private:
 #if defined(ARDUINO_ARCH_ESP8266)
 		os_timer_t m_timer;

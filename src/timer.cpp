@@ -47,6 +47,15 @@ void Timer::setMaximum(void)
 }
 
 //------------------------------------------------------
+uint64_t Timer::getCounterValue(void)
+{
+#if defined(ARDUINO_ARCH_ESP8266)
+	// os_time
+#elif defined(ARDUINO_ARCH_ESP32)
+	return timerRead( m_pTimer );
+#endif
+}
+
 //------------------------------------------------------
 void Timer::reset()
 {
