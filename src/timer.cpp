@@ -51,6 +51,7 @@ uint64_t Timer::getCounterValue(void)
 {
 #if defined(ARDUINO_ARCH_ESP8266)
 	// os_time
+	return 0;
 #elif defined(ARDUINO_ARCH_ESP32)
 	return timerRead( m_pTimer );
 #endif
